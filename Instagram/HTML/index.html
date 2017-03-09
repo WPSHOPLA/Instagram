@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <!-- Mobile viewport optimization (http://mobileboilerplate.com)-->
+  <meta name="description" content="A clone of the Instagram image filter view, built with JSExport.">
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- width=device-width causes the iPhone 5 to letterbox the app, so we want to exclude it for iPhone 5 to allow full screen apps-->
+  <meta name="viewport" content="initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" media="(device-height: 568px)">
+  <meta http-equiv="cleartype" content="on">
+  <meta name="format-detection" content="telephone=no, email=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="msapplication-tap-highlight" content="no">
+
+  <!-- Title -->
+  <title>Instagram</title>
+  <link rel="stylesheet" href="main.css">
+  <script src="jquery-2.1.0.min.js"></script>
+  <script src="live-reload.js"></script>
+
+  <script>
+    var setTransform = function(el, transform) {
+      el.style.WebkitTransform =
+      el.style.MozTransform =
+      el.style.msTransform =
+      el.style.OTransform =
+      el.style.transform = transform;
+    };
+
+    var preview, picker, converter;
+
+    // https://developer.apple.com/library/mac/documentation/graphicsimaging/reference/CoreImageFilterReference/Reference/reference.html#//apple_ref/doc/filter/ci/CISepiaTone
+    var filters = [
+      {
+        "name": "Normal",
+        "CIName": "Normal"
+      },
+      {
+        "name": "Vignette",
+        "CIName": "CIVignette",
+        "options": {
+          "inputIntensity": 0.8,
+          "inputRadius": 20.0
+        }
+      },
+      {
+        "name": "Sepia",
+        "CIName": "CISepiaTone",
+        "options": {
+          "inputIntensity": 1.0
+        }
+      },
+      {
+        "name": "Invert Color",
+        "CIName": "CIColorInvert"
+      },
+      {
+        "name": "Posterize", // remaps red, green, and blue color components to the number of brightness values you specify for each color component
+        "CIName": "CIColorPosterize"
+      },
+      {
+        "name": "Dot Screen", // simulate the dot patterns of a halftone screen
+        "CIName": "CIDotScreen"
+      },
+      {
+        "name": "Gaussian Blur",
+        "CIName": "CIGaussianBlur",
+        "options": {
+          "inputRadius": 5.0
+        }
+      },
+      {
+        "name": "Instant Effect",
+        "CIName": "CIPhotoEffectInstant"
+      },
+      {
+        "name": "B&W",
+        "CIName": "CIPhotoEffectMono"
+      },
+      {
+        "name": "Pixelate",
+        "CIName": "CIPixellate"
+      }
+    ];
+
+    var loadApp = function () {
+      var $ul = $('ul.filters');
+      var x = 0, y = 0;
+
+      preview = $('#image-preview img')[0];
+      picker = JSEImagePicker.create();
+      converter = JSECoreImage.create();
+
+      // Create filters
+      for (var i=0; i<filters.length; i++) {
+        var filter = filters[i];
+        var $li = $("<li><img src='' alt=''><div class='caption'>" + filter.name + "</div></li>");
+        setTransform($li[0], "translate(" + x + "px," + y + "px)");
+        $li.find('img')[0].src = createThumbnail(filter.CIName, filter.options);
+        $ul.append($li);
+        x += 100;
+      }
+
+      // Handle clicks on the camera button
+      $('.right-bar-button').on('click', function(e) {
+        picker.getPicture({sourceType: 'Camera'}, function(status, imageURI, relativeURI) {
+          preview.src = preview.originalSrc = imageURI;
+          preview.relativeSrc = relativeURI;
+        });
+      });
+
+      // Handle clicks on the filter thumbnails
+      $('ul.filters li').on('click', function(e) {
+        var $li = $(e.currentTarget);
+        var index = $li.index();
+        var filter = filters[index];
+        if (filter.name != 'Normal') {
+          preview.src = converter.applyFilter(filter.CIName, preview.relativeSrc, filter.options);
+        } else {
+          preview.src = preview.originalSrc;
+        }
+      });
+    };
+  </script>
+
+</head>
+<body>
+<div class="navbar">
+  <div class="title">Instagram</div>
+  <div class="right-bar-button">
+    <a href="#" class="icon-camera"></a>
+  </div>
+</div>
+
+<div id="image-preview">
+  <img src="" alt="">
+</div>
+<div id="filter-area">
+  <ul class="filters"></ul>
+</div>
+</body>
+</html>
